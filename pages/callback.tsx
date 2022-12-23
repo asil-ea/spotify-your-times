@@ -32,9 +32,21 @@ export default function Callback({
 }) {
   const router = useRouter();
 
+  // declare a type as an object with the keys of the top tracks by year object as keys and the values as arrays of tracks
+  type TopYearsAndTheirTracksType = {
+    [key: string]: any[];
+  };
+
   // const [code, setCode] = useState<String | String[] | undefined>(); // TODO: figure the type out
   const [bearer, setBearer] = useState();
-  const [timeRange, setTimeRange] = useState("long_term");
+  const [timeRange, setTimeRange] = useState("medium_term");
+  const [topTracks, setTopTracks] = useState();
+  const [topYearsAndTheirTracks, setTopYearsAndTheirTracks] =
+    useState<TopYearsAndTheirTracksType>();
+  const [selectedYears, setSelectedYears] = useState<any>();
+  const [selectedYearsAndTheirTracks, setSelectedYearsAndTheirTracks] =
+    useState<any>();
+
   const fetchTopTracks = (bearer: string | undefined, timeRange: string) => {
     const url = "https://api.spotify.com/v1/me/top/tracks";
     const data = {
@@ -52,11 +64,48 @@ export default function Callback({
       headers: headers,
     })
       .then((res) => {
-        console.log(res.data);
+        console.log("response", res.data);
+        setTopTracks(res.data.items);
+        console.log("getReleaseYears()", getReleaseYears(res.data.items));
+        console.log(
+          "getTracksByYear()",
+          getTracksByYear(res.data.items, "2020", "2016", "2009")
+        );
       })
       .catch((err) => {
         console.log(err);
       });
+  };
+
+  // a function that scrapes the release years of the top tracks from the album object, and returns an object with the years as keys and the array of tracks as values
+  const getReleaseYears = (tracks: any) => {
+    const topYearsAndTheirTracks: any = {};
+    tracks.forEach((track: any) => {
+      const year = track.album.release_date.slice(0, 4);
+      if (topYearsAndTheirTracks[year]) {
+        topYearsAndTheirTracks[year].push(track);
+      } else {
+        topYearsAndTheirTracks[year] = [track];
+      }
+    });
+    setTopYearsAndTheirTracks(topYearsAndTheirTracks);
+    return topYearsAndTheirTracks;
+  };
+
+  // a function that takes more than one years and tracks as arguments and returns an array of tracks that were released in that year
+  const getTracksByYear = (tracks: any, ...years: string[]) => {
+    const topTracksByYear: any = {};
+    tracks.forEach((track: any) => {
+      const year = track.album.release_date.slice(0, 4);
+      if (years.includes(year)) {
+        if (topTracksByYear[year]) {
+          topTracksByYear[year].push(track);
+        } else {
+          topTracksByYear[year] = [track];
+        }
+      }
+    });
+    return topTracksByYear;
   };
 
   const { data, error } = useSWR(
@@ -74,13 +123,31 @@ export default function Callback({
   }, [data]);
 
   useEffect(() => {
-    console.log(timeRange);
+    console.log("timeRange", timeRange);
   }, [timeRange]);
 
-  function handleSubmit(e: any): void {
-    e.preventDefault()
-    fetchTopTracks(bearer, timeRange)
-  }
+  const handleTermSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+    e.preventDefault();
+    fetchTopTracks(bearer, timeRange);
+  };
+
+  const handleYearsSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+    e.preventDefault();
+    // get checked years and add them to an array
+    const checkedYears: any = [];
+    const checkboxes = document.querySelectorAll("input[type=checkbox]");
+    checkboxes.forEach((checkbox: any) => {
+      if (checkbox.checked) {
+        checkedYears.push(checkbox.value);
+      }
+    });
+    setSelectedYears(checkedYears);
+    console.log("checkedYears", checkedYears);
+    console.log(
+      "getTracksByYear()",
+      getTracksByYear(topTracks, ...checkedYears)
+    );
+  };
 
   // this code block is not needed anymore, but i will keep it here for now
   // useEffect(() => {
@@ -124,7 +191,7 @@ export default function Callback({
   return (
     <>
       {/* create radio input with 3 options: short_term, medium_term, long_term */}
-      <form onSubmit={(e) => handleSubmit(e)}>
+      <form onSubmit={(e) => handleTermSubmit(e)}>
         <input
           type="radio"
           name="timeRange"
@@ -137,6 +204,7 @@ export default function Callback({
           type="radio"
           name="timeRange"
           value="medium_term"
+          checked
           onChange={(e) => setTimeRange(e.target.value)}
         />
         <label htmlFor="medium_term">Medium Term</label>
@@ -149,10 +217,57 @@ export default function Callback({
         />
         <label htmlFor="long_term">Long Term</label>
         <br />
-        <input
-          type="submit"
-          value="send"
-        />
+        <input type="submit" value="send" />
+      </form>
+      <hr />
+      <form onSubmit={(e) => handleYearsSubmit(e)}>
+        {/* a seperate radio button per topYearsAndTheirTracks. */}
+        {/* {topYearsAndTheirTracks &&
+          Object.keys(topYearsAndTheirTracks).sort((a, b) => {
+            return (
+              topYearsAndTheirTracks[b].length -
+              topYearsAndTheirTracks[a].length
+            );
+          }).map((year) => {
+            return (
+              <div key={year}>
+                <input type="checkbox" name="year" value={year} />
+                <label htmlFor={year}>{`${year} (${
+                  topYearsAndTheirTracks[year].length
+                } ${
+                  topYearsAndTheirTracks[year].length == 1 ? "track" : "tracks"
+                })`}</label>
+              </div>
+            );
+          })} */}
+          {/* a seperate dropdown per topYearsAndTheirTracks. the dropdown contents must be the track information */}
+          {topYearsAndTheirTracks &&
+            Object.keys(topYearsAndTheirTracks).sort((a, b) => {
+              return (
+                topYearsAndTheirTracks[b].length -
+                topYearsAndTheirTracks[a].length
+              );
+            }).map((year) => {
+              return (
+                <div key={year}>
+                  <label htmlFor={year}>{`${year} (${
+                    topYearsAndTheirTracks[year].length
+                  } ${
+                    topYearsAndTheirTracks[year].length == 1 ? "track" : "tracks"
+                  })`}</label>
+                  <select name={year} id={year}>
+                    {topYearsAndTheirTracks[year].map((track) => {
+                      return (
+                        <option key={track.id} value={track.id}>
+                          {track.name}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              );
+            })}
+        <br />
       </form>
     </>
   );
