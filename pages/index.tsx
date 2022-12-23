@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import Head from "next/head";
 import styles from "../styles/Home.module.css";
 import Link from "next/link";
+import { Button, Container } from "@mui/material";
+import { FaSpotify } from "react-icons/fa";
 
 export function getStaticProps() {
   return {
@@ -40,18 +42,25 @@ export default function Home({
   });
 
   return (
-    <div className={styles.container}>
+    <div style={{
+      backgroundColor: "#1DB954"
+    }}>
       <Head>
         <title>Spotify Your Times</title>
         <meta name="description" content="Spotify your times" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
-      <a
-        href={`https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=user-top-read`}
-      >
-        <input type="button" value="Log in with Spotify" />
-      </a>
+      <Container className={styles.container}>
+        <Button
+          startIcon={<FaSpotify />}
+          color="success"
+          size="large"
+          href={`https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=user-top-read`}
+          variant="contained"
+        >
+          Log in with Spotify
+        </Button>
+      </Container>
     </div>
   );
 }
