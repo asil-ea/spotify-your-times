@@ -2,7 +2,23 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import axios from "axios";
 import useSWR from "swr";
-
+import {
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Button,
+  Card,
+  CardActions,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  CardContent,
+  Typography,
+} from "@mui/material";
+import { FaChevronDown } from "react-icons/fa";
+import { Container } from "@mui/system";
 export function getStaticProps() {
   return {
     props: {
@@ -189,40 +205,100 @@ export default function Callback({
   // ]);
 
   return (
-    <>
-      {/* create radio input with 3 options: short_term, medium_term, long_term */}
-      <form onSubmit={(e) => handleTermSubmit(e)}>
-        <input
-          type="radio"
-          name="timeRange"
-          value="short_term"
-          onChange={(e) => setTimeRange(e.target.value)}
-        />
-        <label htmlFor="short_term">Short Term</label>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+        backgroundColor: "#1DB954",
+      }}
+    >
+      <Container>
+        {/* create radio input with 3 options: short_term, medium_term, long_term */}
+        <Card>
+          <form onSubmit={(e: any) => handleTermSubmit(e)}>
+            <CardContent>
+              <div>
+                <FormControl>
+                  <FormLabel>Get top tracks of...</FormLabel>
+                  <RadioGroup
+                    defaultValue="medium_term"
+                    name="radio-buttons-group"
+                  >
+                    <FormControlLabel
+                      value="short_term"
+                      control={<Radio />}
+                      label="last 4 weeks"
+                      onChange={(e: any) => setTimeRange(e.target.value)}
+                    />
+                    <FormControlLabel
+                      value="medium_term"
+                      control={<Radio />}
+                      label="last 6 months"
+                      onChange={(e: any) => setTimeRange(e.target.value)}
+                    />
+                    <FormControlLabel
+                      value="long_term"
+                      control={<Radio />}
+                      label="all time"
+                      onChange={(e: any) => setTimeRange(e.target.value)}
+                    />
+                  </RadioGroup>
+                </FormControl>
+              </div>
+            </CardContent>
+            <CardActions>
+              <Button type="submit" variant="contained">
+                Submit
+              </Button>
+            </CardActions>
+          </form>
+        </Card>
         <br />
-        <input
-          type="radio"
-          name="timeRange"
-          value="medium_term"
-          checked
-          onChange={(e) => setTimeRange(e.target.value)}
-        />
-        <label htmlFor="medium_term">Medium Term</label>
-        <br />
-        <input
-          type="radio"
-          name="timeRange"
-          value="long_term"
-          onChange={(e) => setTimeRange(e.target.value)}
-        />
-        <label htmlFor="long_term">Long Term</label>
-        <br />
-        <input type="submit" value="send" />
-      </form>
-      <hr />
-      <form onSubmit={(e) => handleYearsSubmit(e)}>
-        {/* a seperate radio button per topYearsAndTheirTracks. */}
-        {/* {topYearsAndTheirTracks &&
+        {/* a seperate dropdown per topYearsAndTheirTracks. the dropdown contents must be the track information */}
+        {topYearsAndTheirTracks &&
+          Object.keys(topYearsAndTheirTracks)
+            .sort((a, b) => {
+              return (
+                topYearsAndTheirTracks[b].length -
+                topYearsAndTheirTracks[a].length
+              );
+            })
+            .map((year) => {
+              return (
+                <>
+                  <Accordion key={year}>
+                    <AccordionSummary expandIcon={<FaChevronDown />}>
+                      <Typography sx={{ width: "33%", flexShrink: 0 }}>
+                        {year}
+                      </Typography>
+                      <Typography sx={{ color: "text.secondary" }}>
+                        {`${topYearsAndTheirTracks[year].length} ${
+                          topYearsAndTheirTracks[year].length == 1
+                            ? "track"
+                            : "tracks"
+                        }`}
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      {topYearsAndTheirTracks[year].map((track) => {
+                        return (
+                          <Typography key={track.name}>
+                            {track.name} by {track.artists[0].name}
+                          </Typography>
+                        );
+                      })}
+                    </AccordionDetails>
+                  </Accordion>
+                </>
+              );
+            })}
+
+        {/* <form onSubmit={(e) => handleYearsSubmit(e)}>
+          a seperate radio button per topYearsAndTheirTracks.
+          {topYearsAndTheirTracks &&
           Object.keys(topYearsAndTheirTracks).sort((a, b) => {
             return (
               topYearsAndTheirTracks[b].length -
@@ -239,36 +315,9 @@ export default function Callback({
                 })`}</label>
               </div>
             );
-          })} */}
-          {/* a seperate dropdown per topYearsAndTheirTracks. the dropdown contents must be the track information */}
-          {topYearsAndTheirTracks &&
-            Object.keys(topYearsAndTheirTracks).sort((a, b) => {
-              return (
-                topYearsAndTheirTracks[b].length -
-                topYearsAndTheirTracks[a].length
-              );
-            }).map((year) => {
-              return (
-                <div key={year}>
-                  <label htmlFor={year}>{`${year} (${
-                    topYearsAndTheirTracks[year].length
-                  } ${
-                    topYearsAndTheirTracks[year].length == 1 ? "track" : "tracks"
-                  })`}</label>
-                  <select name={year} id={year}>
-                    {topYearsAndTheirTracks[year].map((track) => {
-                      return (
-                        <option key={track.id} value={track.id}>
-                          {track.name}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-              );
-            })}
-        <br />
-      </form>
-    </>
+          })}
+        </form> */}
+      </Container>
+    </div>
   );
 }
