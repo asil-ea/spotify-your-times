@@ -1,10 +1,29 @@
 import { useEffect, useState } from "react";
 import Head from "next/head";
 import styles from "../styles/Home.module.css";
+import Link from "next/link";
 
-export default function Home() {
+export function getStaticProps() {
+  return {
+    props: {
+      clientId: process.env.APP_CLIENTID,
+      clientSecret: process.env.APP_CLIENTSECRET,
+      redirectUri: process.env.APP_REDIRECTURI,
+    },
+  };
+}
 
+export default function Home({
+  clientId,
+  clientSecret,
+  redirectUri,
+}: {
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
+}) {
   const [generateState, setGenerateState] = useState(() => (length: Number) => {
+    // TODO: use state
     const crypto = require("crypto");
 
     let result = "";
@@ -19,13 +38,6 @@ export default function Home() {
     // sessionStorage.setItem("state", hashed); // sessionStorage is not available, because this is a server-side rendered page
     return hashed;
   });
-  const [loginRequest, setLoginRequest] = useState(
-    `https://accounts.spotify.com/authorize?client_id=${
-      process.env.APP_CLIENTID
-    }&response_type=code&redirect_uri=${
-      process.env.APP_REDIRECTURI
-    }&scope=user-top-read&state=${generateState(128)}`
-  );
 
   return (
     <div className={styles.container}>
@@ -35,7 +47,9 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <a href={loginRequest}>
+      <a
+        href={`https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=user-top-read`}
+      >
         <input type="button" value="Log in with Spotify" />
       </a>
     </div>
