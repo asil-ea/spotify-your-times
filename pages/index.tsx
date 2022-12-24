@@ -20,9 +20,9 @@ export default function Home({
   clientSecret,
   redirectUri,
 }: {
-  clientId: string;
-  clientSecret: string;
-  redirectUri: string;
+  clientId: string | undefined;
+  clientSecret: string | undefined;
+  redirectUri: string | undefined;
 }) {
   const [generateState, setGenerateState] = useState(() => (length: Number) => {
     // TODO: use state
