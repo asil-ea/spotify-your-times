@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import axios from "axios";
 import useSWR from "swr";
@@ -19,6 +19,7 @@ import {
 } from "@mui/material";
 import { FaChevronDown } from "react-icons/fa";
 import { Container } from "@mui/system";
+import { TopYearsAndTheirTracksContext } from "./contexts/TopYearsAndTheirTracksContext";
 export function getStaticProps() {
   return {
     props: {
@@ -57,8 +58,10 @@ export default function Callback({
   const [bearer, setBearer] = useState();
   const [timeRange, setTimeRange] = useState("medium_term");
   const [topTracks, setTopTracks] = useState();
-  const [topYearsAndTheirTracks, setTopYearsAndTheirTracks] =
-    useState<TopYearsAndTheirTracksType>();
+  const { TopYearsAndTheirTracks, setTopYearsAndTheirTracks } = useContext(
+    TopYearsAndTheirTracksContext
+  );
+
   const [selectedYears, setSelectedYears] = useState<any>();
   const [selectedYearsAndTheirTracks, setSelectedYearsAndTheirTracks] =
     useState<any>();
@@ -87,6 +90,7 @@ export default function Callback({
           "getTracksByYear()",
           getTracksByYear(res.data.items, "2020", "2016", "2009")
         );
+        router.push('/results');
       })
       .catch((err) => {
         console.log(err);
@@ -95,17 +99,17 @@ export default function Callback({
 
   // a function that scrapes the release years of the top tracks from the album object, and returns an object with the years as keys and the array of tracks as values
   const getReleaseYears = (tracks: any) => {
-    const topYearsAndTheirTracks: any = {};
+    const TopYearsAndTheirTracks: any = {};
     tracks.forEach((track: any) => {
       const year = track.album.release_date.slice(0, 4);
-      if (topYearsAndTheirTracks[year]) {
-        topYearsAndTheirTracks[year].push(track);
+      if (TopYearsAndTheirTracks[year]) {
+        TopYearsAndTheirTracks[year].push(track);
       } else {
-        topYearsAndTheirTracks[year] = [track];
+        TopYearsAndTheirTracks[year] = [track];
       }
     });
-    setTopYearsAndTheirTracks(topYearsAndTheirTracks);
-    return topYearsAndTheirTracks;
+    setTopYearsAndTheirTracks(TopYearsAndTheirTracks);
+    return TopYearsAndTheirTracks;
   };
 
   // a function that takes more than one years and tracks as arguments and returns an array of tracks that were released in that year
@@ -165,44 +169,44 @@ export default function Callback({
     );
   };
 
-  // this code block is not needed anymore, but i will keep it here for now
-  // useEffect(() => {
-  //   // this hook runs twice, i do not know why, but it works. fix this later on
+  // // this code block is not needed anymore, but i will keep it here for now
+  // // useEffect(() => {
+  // //   // this hook runs twice, i do not know why, but it works. fix this later on
 
-  //   if (!router.isReady) return;
-  //   setCode(router.query.code);
+  // //   if (!router.isReady) return;
+  // //   setCode(router.query.code);
 
-  //   const controller = new AbortController();
+  // //   const controller = new AbortController();
 
-  //   axios({
-  //     signal: controller.signal,
-  //     method: "POST",
-  //     url: "https://accounts.spotify.com/api/token",
-  //     data: `grant_type=authorization_code&code=${router.query.code}&redirect_uri=${redirectUri}&client_id=${clientId}&client_secret=${clientSecret}`,
-  //     // headers: {
-  //     //   'Authorization': `Basic ${(new Buffer(process.env.APP_CLIENTID + ':' + process.env.APP_CLIENTSECRET).toString('base64'))}`
-  //     // }
-  //   })
-  //     .then((response) => {
-  //       console.log(response.data.access_token);
-  //       setBearer(response.data.access_token);
-  //       // router.push("/top");
-  //     })
-  //     .catch((error) => {
-  //       console.log(error);
-  //     });
+  // //   axios({
+  // //     signal: controller.signal,
+  // //     method: "POST",
+  // //     url: "https://accounts.spotify.com/api/token",
+  // //     data: `grant_type=authorization_code&code=${router.query.code}&redirect_uri=${redirectUri}&client_id=${clientId}&client_secret=${clientSecret}`,
+  // //     // headers: {
+  // //     //   'Authorization': `Basic ${(new Buffer(process.env.APP_CLIENTID + ':' + process.env.APP_CLIENTSECRET).toString('base64'))}`
+  // //     // }
+  // //   })
+  // //     .then((response) => {
+  // //       console.log(response.data.access_token);
+  // //       setBearer(response.data.access_token);
+  // //       // router.push("/top");
+  // //     })
+  // //     .catch((error) => {
+  // //       console.log(error);
+  // //     });
 
-  //   console.log(router.query.code, router.isReady);
+  // //   console.log(router.query.code, router.isReady);
 
-  //   return () => controller.abort();
-  // }, [
-  //   clientId,
-  //   clientSecret,
-  //   code,
-  //   redirectUri,
-  //   router.isReady,
-  //   router.query.code,
-  // ]);
+  // //   return () => controller.abort();
+  // // }, [
+  // //   clientId,
+  // //   clientSecret,
+  // //   code,
+  // //   redirectUri,
+  // //   router.isReady,
+  // //   router.query.code,
+  // // ]);
 
   return (
     <div
@@ -256,62 +260,22 @@ export default function Callback({
             </CardActions>
           </form>
         </Card>
-        <br />
-        {/* a seperate dropdown per topYearsAndTheirTracks. the dropdown contents must be the track information */}
-        {topYearsAndTheirTracks &&
-          Object.keys(topYearsAndTheirTracks)
-            .sort((a, b) => {
-              return (
-                topYearsAndTheirTracks[b].length -
-                topYearsAndTheirTracks[a].length
-              );
-            })
-            .map((year) => {
-              return (
-                <>
-                  <Accordion key={year}>
-                    <AccordionSummary expandIcon={<FaChevronDown />}>
-                      <Typography sx={{ width: "33%", flexShrink: 0 }}>
-                        {year}
-                      </Typography>
-                      <Typography sx={{ color: "text.secondary" }}>
-                        {`${topYearsAndTheirTracks[year].length} ${
-                          topYearsAndTheirTracks[year].length == 1
-                            ? "track"
-                            : "tracks"
-                        }`}
-                      </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      {topYearsAndTheirTracks[year].map((track) => {
-                        return (
-                          <Typography key={track.name}>
-                            {track.name} by {track.artists[0].name}
-                          </Typography>
-                        );
-                      })}
-                    </AccordionDetails>
-                  </Accordion>
-                </>
-              );
-            })}
-
         {/* <form onSubmit={(e) => handleYearsSubmit(e)}>
-          a seperate radio button per topYearsAndTheirTracks.
-          {topYearsAndTheirTracks &&
-          Object.keys(topYearsAndTheirTracks).sort((a, b) => {
+          a seperate radio button per TopYearsAndTheirTracks.
+          {TopYearsAndTheirTracks &&
+          Object.keys(TopYearsAndTheirTracks).sort((a, b) => {
             return (
-              topYearsAndTheirTracks[b].length -
-              topYearsAndTheirTracks[a].length
+              TopYearsAndTheirTracks[b].length -
+              TopYearsAndTheirTracks[a].length
             );
           }).map((year) => {
             return (
               <div key={year}>
                 <input type="checkbox" name="year" value={year} />
                 <label htmlFor={year}>{`${year} (${
-                  topYearsAndTheirTracks[year].length
+                  TopYearsAndTheirTracks[year].length
                 } ${
-                  topYearsAndTheirTracks[year].length == 1 ? "track" : "tracks"
+                  TopYearsAndTheirTracks[year].length == 1 ? "track" : "tracks"
                 })`}</label>
               </div>
             );
